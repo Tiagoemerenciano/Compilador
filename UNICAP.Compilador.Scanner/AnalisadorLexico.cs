@@ -36,7 +36,7 @@ public class AnalisadorLexico
 
     public void SalvarTokensNoArquivoDeSaida()
     {
-        using (StreamWriter streamWriter = new(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), NOME_ARQUIVO_SAIDA)))
+        using (StreamWriter streamWriter = new(Environment.CurrentDirectory + NOME_ARQUIVO_SAIDA))
         {
             foreach (var token in Tokens)
             {

@@ -4,16 +4,21 @@
     {
         public static void Main(string[] args)
         {
-            var codigo = LerCodigoDoArquivo("entrada_teste1.txt");
+            if (args.Length == 0)
+            {
+                throw new ArgumentException("É necessário informar o caminho do arquivo de entrada.");
+            }
+            
+            var codigo = LerCodigoDoArquivo(args[0]);
 
             AnalisadorLexico analisadorLexico = new AnalisadorLexico(codigo.ToCharArray());
 
             analisadorLexico.SalvarTokensNoArquivoDeSaida();
         }
 
-        public static string LerCodigoDoArquivo(string nomeArquivo)
+        public static string LerCodigoDoArquivo(string caminhoArquivo)
         {
-            using (var textoCodigo = new StreamReader(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), nomeArquivo)))
+            using (var textoCodigo = new StreamReader(caminhoArquivo))
             {
                 return textoCodigo.ReadToEnd();
             }

@@ -10,7 +10,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UNICAP.Compilador.Lexical",
 		{97F5A9D9-496C-4015-8D57-498A76B6D76E} = {97F5A9D9-496C-4015-8D57-498A76B6D76E}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UNICAP.Compilador.Utils", "UNICAP.Compilador.Utils\UNICAP.Compilador.Utils.csproj", "{97F5A9D9-496C-4015-8D57-498A76B6D76E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UNICAP.Compilador.Utils", "UNICAP.Compilador.Utils\UNICAP.Compilador.Utils.csproj", "{97F5A9D9-496C-4015-8D57-498A76B6D76E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{6A99F2AD-88FC-4D80-9CDF-3DFAECF7A27F}"
+	ProjectSection(SolutionItems) = preProject
+		Readme.md = Readme.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
