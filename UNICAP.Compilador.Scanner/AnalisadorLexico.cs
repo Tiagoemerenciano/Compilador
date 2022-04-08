@@ -177,7 +177,7 @@ public class AnalisadorLexico
                     }
                     else
                     {
-                        LancarExcecaoLexica(lexema);
+                        LancarExcecaoLexica(lexema, TipoToken.FLOAT);
                     }
                     break;
                 case 3:
@@ -196,7 +196,7 @@ public class AnalisadorLexico
                     }
                     else
                     {
-                        LancarExcecaoLexica(lexema);
+                        LancarExcecaoLexica(lexema, TipoToken.CHAR);
                     }
                     break;
                 case 5:
@@ -207,7 +207,7 @@ public class AnalisadorLexico
                     }
                     else
                     {
-                        LancarExcecaoLexica(lexema);
+                        LancarExcecaoLexica(lexema, TipoToken.CHAR);
                     }
                     break;
                 case 6:
@@ -256,7 +256,7 @@ public class AnalisadorLexico
                     }
                     else
                     {
-                        LancarExcecaoLexica(lexema);
+                        LancarExcecaoLexica(lexema, TipoToken.OPERADOR_RELACIONAL);
                     }
                     break;
                 case 12:
@@ -604,7 +604,7 @@ public class AnalisadorLexico
                     }
                     else if (!caracterAtual.IsLetra() && caracterAtual is not '_' && !caracterAtual.IsDigito())
                     {
-                        LancarExcecaoLexica(lexema);
+                        LancarExcecaoLexica(lexema, TipoToken.STRING);
                     }
                     else
                     {
@@ -646,10 +646,13 @@ public class AnalisadorLexico
         Coluna = 1;
     }
 
-    private void LancarExcecaoLexica(StringBuilder lexema)
+    private void LancarExcecaoLexica(StringBuilder lexema, TipoToken? tipoToken = null)
     {
         var coluna = Coluna > 1 ? Coluna - 1 : Coluna;
-        throw new LexicalException($"Caracter inválido encontrado: {lexema} | Linha: {Linha} | Coluna: {coluna - 1}");
+
+        var descricaoToken = tipoToken?.GetDescription() ?? "Caracter";
+
+        throw new LexicalException($"{descricaoToken} inválido encontrado: {lexema} | Linha: {Linha} | Coluna: {coluna - 1}");
     }
 
     private char ProximoCaracter()
