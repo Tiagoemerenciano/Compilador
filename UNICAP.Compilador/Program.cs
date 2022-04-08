@@ -6,7 +6,7 @@
         {
             if (args.Length == 0)
             {
-                throw new ArgumentException("É necessário informar o caminho do arquivo de entrada.");
+                throw new ArgumentException("Nenhum caminho de arquivo foi informado.");
             }
             
             var codigo = LerCodigoDoArquivo(args[0]);

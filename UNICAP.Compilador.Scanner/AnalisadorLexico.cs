@@ -6,7 +6,7 @@ namespace UNICAP.Compilador;
 
 public class AnalisadorLexico
 {
-    public const string NOME_ARQUIVO_SAIDA = "tokens_lidos.txt";
+    public const string NOME_ARQUIVO_SAIDA = "/tokens_lidos.txt";
 
     public char[] ConteudoArquivo { get; set; }
     public int Estado { get; set; } = 0;
@@ -36,7 +36,8 @@ public class AnalisadorLexico
 
     public void SalvarTokensNoArquivoDeSaida()
     {
-        using (StreamWriter streamWriter = new(Environment.CurrentDirectory + NOME_ARQUIVO_SAIDA))
+        var diretorio = Directory.GetParent(Environment.CurrentDirectory);
+        using (StreamWriter streamWriter = new(diretorio + NOME_ARQUIVO_SAIDA))
         {
             foreach (var token in Tokens)
             {
@@ -642,7 +643,7 @@ public class AnalisadorLexico
     private void IncrementarLinha()
     {
         Linha++;
-        Coluna = 0;
+        Coluna = 1;
     }
 
     private void LancarExcecaoLexica(StringBuilder lexema)
