@@ -12,7 +12,7 @@ public class AnalisadorLexico
     public int Estado { get; set; } = 0;
     public int Posicao { get; set; } = 0;
     public int Linha { get; set; } = 1;
-    public int Coluna { get; set; } = 0;
+    public int Coluna { get; set; } = 1;
     public List<Token> Tokens { get; set; } = new List<Token>();
 
     public AnalisadorLexico(char[] conteudoArquivo)
@@ -188,7 +188,7 @@ public class AnalisadorLexico
                     lexema.Append(caracterAtual);
                     break;
                 case 4:
-                    if (caracterAtual.IsLetra())
+                    if (caracterAtual.IsLetra() || caracterAtual.IsDigito())
                     {
                         Estado = 5;
                         lexema.Append(caracterAtual);
