@@ -8,7 +8,7 @@
 
             LexicalAnalyser lexicalAnalyser = new(code.ToCharArray());
 
-            lexicalAnalyser.SaveTokensInFile();
+            lexicalAnalyser.SalvarTokensNoArquivoDeSaida();
         }
 
         public static string ReadCodeFile(string fileName)

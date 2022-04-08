@@ -20,5 +20,9 @@ namespace UNICAP.Compilador.Utils
         CARACTER_ESPECIAL = 6,
         [Description("Palavra Reservada")]
         PALAVRA_RESERVADA = 7,
+        [Description("String")]
+        STRING = 8,
+        [Description("Inteiro")]
+        INTEIRO = 9
     }
 }

@@ -1,16 +1,10 @@
-﻿using System.Text.RegularExpressions;
-
-namespace UNICAP.Compilador.Utils
+﻿namespace UNICAP.Compilador.Utils
 {
     public static class CharExtensions
     {
         public static bool IsDigito(this char caracter)
         {
             return caracter >= '0' && caracter <= '9';
-        }
-        public static bool IsRelationalOperator(this char caracter)
-        {
-            return caracter is '<' || caracter is '>' || caracter is '=' || caracter is '!';
         }
         public static bool IsLetra(this char caracter)
         {
@@ -20,37 +14,17 @@ namespace UNICAP.Compilador.Utils
         {
             return caracter is '+' || caracter is '-' || caracter is '*' || caracter is '/';
         }
-        public static bool IsAttributionOperator(this char caracter)
-        {
-            return caracter is '=';
-        }
         public static bool IsCaracterEspecial(this char caracter)
         {
             return caracter is ')' || caracter is '(' || caracter is '{' || caracter is '}' || caracter is ',' || caracter is ';';
         }
-        public static bool IsConditionalOperator(this char caracter)
-        {
-            return caracter is '&' || caracter is '|';
-        }
-        public static bool IsOperator(this char caracter)
-        {
-            return IsRelationalOperator(caracter) || IsOperadorAritmetico(caracter) || IsConditionalOperator(caracter);
-        }
-        public static bool IsExclamation(this char caracter)
-        {
-            return caracter is '!';
-        }
-        public static bool IsSpace(this char caracter)
+        public static bool IsEspaco(this char caracter)
         {
             return char.IsWhiteSpace(caracter);
         }
         public static bool IsFimDaLinha(this char caracter)
         {
-            return caracter is '\n' || caracter is '\r';
-        }
-        public static bool IsAssignmentOperator(this char caracter)
-        {
-            return caracter == '=';
+            return caracter is '\n';
         }
     }
 }

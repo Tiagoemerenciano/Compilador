@@ -6,45 +6,38 @@ namespace UNICAP.Compilador;
 
 public class LexicalAnalyser
 {
-    public const string NAME_OUTPUT_FOLDER = "output.txt";
+    public const string NOME_ARQUIVO_SAIDA = "output.txt";
 
-    public char[] Content { get; set; }
+    public char[] ConteudoArquivo { get; set; }
     public int Estado { get; set; } = 0;
-    public int Position { get; set; } = 0;
+    public int Posicao { get; set; } = 0;
     public int Linha { get; set; } = 1;
-    public int Coluna { get; set; } = 0;
+    public int Coluna { get; set; } = 1;
     public List<Token> Tokens { get; set; } = new List<Token>();
-    public List<LexicalException> Errors { get; set; } = new List<LexicalException>();
 
-    public LexicalAnalyser(char[] content)
+    public LexicalAnalyser(char[] conteudoArquivo)
     {
-        Content = content;
+        ConteudoArquivo = conteudoArquivo;
+        ConteudoArquivo = ConteudoArquivo.Append(' ').ToArray();
         while (true)
         {
             var token = GetNextToken();
 
             if (token != null)
             {
-                try
-                {
-                    Tokens.Add(token);
-                }
-                catch (LexicalException exception)
-                {
-                    Errors.Add(exception);
-                }
+                Tokens.Add(token);
             }
             else
             {
-                Position = 0;
+                Posicao = 0;
                 break;
             }
         }
     }
 
-    public void SaveTokensInFile()
+    public void SalvarTokensNoArquivoDeSaida()
     {
-        using (StreamWriter streamWriter = new(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), NAME_OUTPUT_FOLDER)))
+        using (StreamWriter streamWriter = new(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), NOME_ARQUIVO_SAIDA)))
         {
             foreach (var token in Tokens)
             {
@@ -56,9 +49,7 @@ public class LexicalAnalyser
     private Token? GetNextToken()
     {
         if (FimDeArquivo())
-        {
             return null;
-        }
 
         var lexema = new StringBuilder();
         Estado = 0;
@@ -66,6 +57,11 @@ public class LexicalAnalyser
         while (true)
         {
             var caracterAtual = ProximoCaracter();
+
+            if (caracterAtual.IsFimDaLinha())
+            {
+                IncrementarLinha();
+            }
 
             switch (Estado)
             {
@@ -75,57 +71,62 @@ public class LexicalAnalyser
                         Estado = 1;
                         lexema.Append(caracterAtual);
                     }
-                    else if (caracterAtual == '\'')
+                    else if (caracterAtual is '\'')
                     {
                         Estado = 4;
                         lexema.Append(caracterAtual);
                     }
-                    else if (caracterAtual == 'i')
+                    else if (caracterAtual is 'i')
                     {
                         Estado = 13;
                         lexema.Append(caracterAtual);
                     }
-                    else if (caracterAtual == 'c')
+                    else if (caracterAtual is 'c')
                     {
                         Estado = 16;
                         lexema.Append(caracterAtual);
                     }
-                    else if (caracterAtual == 'f')
+                    else if (caracterAtual is 'f')
                     {
                         Estado = 19;
                         lexema.Append(caracterAtual);
                     }
-                    else if (caracterAtual == 'm')
+                    else if (caracterAtual is 'm')
                     {
                         Estado = 22;
                         lexema.Append(caracterAtual);
                     }
-                    else if (caracterAtual == 'e')
+                    else if (caracterAtual is 'e')
                     {
                         Estado = 25;
                         lexema.Append(caracterAtual);
                     }
-                    else if (caracterAtual == 'w')
+                    else if (caracterAtual is 'w')
                     {
                         Estado = 28;
                         lexema.Append(caracterAtual);
                     }
-                    else if (caracterAtual == 'd')
+                    else if (caracterAtual is 'd')
                     {
                         Estado = 31;
                         lexema.Append(caracterAtual);
                     }
-                    else if (caracterAtual == '_' || caracterAtual.IsLetra())
+                    else if (caracterAtual is '_' || caracterAtual.IsLetra())
                     {
                         Estado = 7;
                         lexema.Append(caracterAtual);
                     }
-                    else if (caracterAtual == '=' || caracterAtual == '<' || caracterAtual == '>')
+                    else if (caracterAtual is '<' || caracterAtual is '>')
                     {
                         Estado = 9;
                         lexema.Append(caracterAtual);
                     }
-                    else if (caracterAtual == '!')
+                    else if (caracterAtual is '=')
+                    {
+                        Estado = 34;
+                        lexema.Append(caracterAtual);
+                    }
+                    else if (caracterAtual is '!')
                     {
                         Estado = 11;
                         lexema.Append(caracterAtual);
@@ -140,14 +141,19 @@ public class LexicalAnalyser
                         Estado = 33;
                         lexema.Append(caracterAtual);
                     }
-                    else if (!caracterAtual.IsFimDaLinha())
+                    else if (caracterAtual is '"')
+                    {
+                        Estado = 35;
+                        lexema.Append(caracterAtual);
+                    }
+                    else if (!caracterAtual.IsFimDaLinha() && !caracterAtual.IsEspaco())
                     {
                         lexema.Append(caracterAtual);
                         LancarExcecaoLexica(lexema);
                     }
                     break;
                 case 1:
-                    if (caracterAtual == '.')
+                    if (caracterAtual is '.')
                     {
                         Estado = 2;
                         lexema.Append(caracterAtual);
@@ -158,7 +164,7 @@ public class LexicalAnalyser
                     }
                     else
                     {
-                        LancarExcecaoLexica(lexema);
+                        return Token(TipoToken.INTEIRO, lexema);
                     }
                     break;
                 case 2:
@@ -192,7 +198,7 @@ public class LexicalAnalyser
                     }
                     break;
                 case 5:
-                    if (caracterAtual == '\'')
+                    if (caracterAtual is '\'')
                     {
                         Estado = 6;
                         lexema.Append(caracterAtual);
@@ -206,7 +212,7 @@ public class LexicalAnalyser
                     Estado = 0;
                     return new Token(TipoToken.CHAR, lexema.ToString(), Linha, Coluna);
                 case 7:
-                    if (caracterAtual.IsLetra() || caracterAtual.IsDigito() || caracterAtual == '_')
+                    if (caracterAtual.IsLetra() || caracterAtual.IsDigito())
                     {
                         Estado = 8;
                         lexema.Append(caracterAtual);
@@ -218,7 +224,7 @@ public class LexicalAnalyser
                     }
                     break;
                 case 8:
-                    if (!caracterAtual.IsLetra() && !caracterAtual.IsDigito() && caracterAtual != '_')
+                    if (!caracterAtual.IsLetra() && !caracterAtual.IsDigito())
                     {
                         Estado = 0;
                         return Token(TipoToken.IDENTIFICADOR, lexema);
@@ -226,18 +232,22 @@ public class LexicalAnalyser
                     lexema.Append(caracterAtual);
                     break;
                 case 9:
-                    if (caracterAtual != '=')
+                    if (caracterAtual is '=')
                     {
+                        Estado = 10;
+                        lexema.Append(caracterAtual);
+                    }
+                    else
+                    {
+                        Estado = 0;
                         return Token(TipoToken.OPERADOR_ATRIBUICAO, lexema);
                     }
-                    Estado = 10;
-                    lexema.Append(caracterAtual);
                     break;
                 case 10:
                     Estado = 0;
                     return Token(TipoToken.OPERADOR_RELACIONAL, lexema);
                 case 11:
-                    if (caracterAtual == '=')
+                    if (caracterAtual is '=')
                     {
                         Estado = 10;
                         lexema.Append(caracterAtual);
@@ -251,128 +261,135 @@ public class LexicalAnalyser
                     Estado = 0;
                     return Token(TipoToken.CARACTER_ESPECIAL, lexema);
                 case 13:
-                    if (caracterAtual == 'f')
+                    if (caracterAtual is 'f')
                     {
                         Estado = 14;
                         lexema.Append(caracterAtual);
                     }
-                    else if (caracterAtual == 'n')
+                    else if (caracterAtual is 'n')
                     {
                         Estado = 15;
                         lexema.Append(caracterAtual);
                     }
-                    else if (caracterAtual.IsDigito() || caracterAtual.IsLetra() || caracterAtual == '_' || caracterAtual.IsFimDaLinha())
+                    else if (caracterAtual.IsDigito() || caracterAtual.IsLetra() || caracterAtual.IsFimDaLinha())
                     {
                         Estado = 8;
                         lexema.Append(caracterAtual);
                     }
                     else
                     {
-                        LancarExcecaoLexica(lexema);
+                        Estado = 0;
+                        return Token(TipoToken.IDENTIFICADOR, lexema);
                     }
                     break;
                 case 14:
                     Estado = 0;
                     return Token(TipoToken.PALAVRA_RESERVADA, lexema);
                 case 15:
-                    if (caracterAtual == 't')
+                    if (caracterAtual is 't')
                     {
                         Estado = 14;
                         lexema.Append(caracterAtual);
                     }
-                    else if (caracterAtual.IsDigito() || caracterAtual.IsLetra() || caracterAtual == '_' || caracterAtual.IsFimDaLinha() || FimDeArquivo())
+                    else if (caracterAtual.IsDigito() || caracterAtual.IsLetra() || caracterAtual.IsFimDaLinha())
                     {
                         Estado = 8;
                         lexema.Append(caracterAtual);
                     }
                     else
                     {
-                        LancarExcecaoLexica(lexema);
+                        Estado = 0;
+                        return Token(TipoToken.IDENTIFICADOR, lexema);
                     }
                     break;
                 case 16:
-                    if (caracterAtual == 'h')
+                    if (caracterAtual is 'h')
                     {
                         Estado = 17;
                         lexema.Append(caracterAtual);
                     }
-                    else if (caracterAtual.IsDigito() || caracterAtual.IsLetra() || caracterAtual == '_' || caracterAtual.IsFimDaLinha())
+                    else if (caracterAtual.IsDigito() || caracterAtual.IsLetra() || caracterAtual.IsFimDaLinha())
                     {
                         Estado = 8;
                         lexema.Append(caracterAtual);
                     }
                     else
                     {
-                        LancarExcecaoLexica(lexema);
+                        Estado = 0;
+                        return Token(TipoToken.IDENTIFICADOR, lexema);
                     }
                     break;
                 case 17:
-                    if (caracterAtual == 'a')
+                    if (caracterAtual is 'a')
                     {
                         Estado = 18;
                         lexema.Append(caracterAtual);
                     }
-                    else if (caracterAtual.IsDigito() || caracterAtual.IsLetra() || caracterAtual == '_' || caracterAtual.IsFimDaLinha())
+                    else if (caracterAtual.IsDigito() || caracterAtual.IsLetra() || caracterAtual.IsFimDaLinha())
                     {
                         Estado = 8;
                         lexema.Append(caracterAtual);
                     }
                     else
                     {
-                        LancarExcecaoLexica(lexema);
+                        Estado = 0;
+                        return Token(TipoToken.IDENTIFICADOR, lexema);
                     }
                     break;
                 case 18:
-                    if (caracterAtual == 'r')
+                    if (caracterAtual is 'r')
                     {
                         Estado = 14;
                         lexema.Append(caracterAtual);
                     }
-                    else if (caracterAtual.IsDigito() || caracterAtual.IsLetra() || caracterAtual == '_' || caracterAtual.IsFimDaLinha())
+                    else if (caracterAtual.IsDigito() || caracterAtual.IsLetra() || caracterAtual.IsFimDaLinha())
                     {
                         Estado = 8;
                         lexema.Append(caracterAtual);
                     }
                     else
                     {
-                        LancarExcecaoLexica(lexema);
+                        Estado = 0;
+                        return Token(TipoToken.IDENTIFICADOR, lexema);
                     }
                     break;
                 case 19:
-                    if (caracterAtual == 'o')
+                    if (caracterAtual is 'o')
                     {
                         Estado = 18;
                         lexema.Append(caracterAtual);
                     }
-                    else if (caracterAtual == 'l')
+                    else if (caracterAtual is 'l')
                     {
                         Estado = 20;
                         lexema.Append(caracterAtual);
                     }
-                    else if (caracterAtual.IsDigito() || caracterAtual.IsLetra() || caracterAtual == '_' || caracterAtual.IsFimDaLinha())
+                    else if (caracterAtual.IsDigito() || caracterAtual.IsLetra() || caracterAtual.IsFimDaLinha())
                     {
                         Estado = 8;
                         lexema.Append(caracterAtual);
                     }
                     else
                     {
-                        LancarExcecaoLexica(lexema);
+                        Estado = 0;
+                        return Token(TipoToken.IDENTIFICADOR, lexema);
                     }
                     break;
                 case 20:
-                    if (caracterAtual == 'o')
+                    if (caracterAtual is 'o')
                     {
                         Estado = 21;
                         lexema.Append(caracterAtual);
                     }
-                    else if (caracterAtual.IsDigito() || caracterAtual.IsLetra() || caracterAtual == '_' || caracterAtual.IsFimDaLinha())
+                    else if (caracterAtual.IsDigito() || caracterAtual.IsLetra() || caracterAtual.IsFimDaLinha())
                     {
                         Estado = 8;
                         lexema.Append(caracterAtual);
                     }
                     else
                     {
-                        LancarExcecaoLexica(lexema);
+                        Estado = 0;
+                        return Token(TipoToken.IDENTIFICADOR, lexema);
                     }
                     break;
                 case 21:
@@ -381,14 +398,15 @@ public class LexicalAnalyser
                         Estado = 15;
                         lexema.Append(caracterAtual);
                     }
-                    else if (caracterAtual.IsDigito() || caracterAtual.IsLetra() || caracterAtual == '_' || caracterAtual.IsFimDaLinha())
+                    else if (caracterAtual.IsDigito() || caracterAtual.IsLetra() || caracterAtual.IsFimDaLinha())
                     {
                         Estado = 8;
                         lexema.Append(caracterAtual);
                     }
                     else
                     {
-                        LancarExcecaoLexica(lexema);
+                        Estado = 0;
+                        return Token(TipoToken.IDENTIFICADOR, lexema);
                     }
                     break;
                 case 22:
@@ -397,14 +415,15 @@ public class LexicalAnalyser
                         Estado = 23;
                         lexema.Append(caracterAtual);
                     }
-                    else if (caracterAtual.IsDigito() || caracterAtual.IsLetra() || caracterAtual == '_' || caracterAtual.IsFimDaLinha())
+                    else if (caracterAtual.IsDigito() || caracterAtual.IsLetra() || caracterAtual.IsFimDaLinha())
                     {
                         Estado = 8;
                         lexema.Append(caracterAtual);
                     }
                     else
                     {
-                        LancarExcecaoLexica(lexema);
+                        Estado = 0;
+                        return Token(TipoToken.IDENTIFICADOR, lexema);
                     }
                     break;
                 case 23:
@@ -413,14 +432,15 @@ public class LexicalAnalyser
                         Estado = 24;
                         lexema.Append(caracterAtual);
                     }
-                    else if (caracterAtual.IsDigito() || caracterAtual.IsLetra() || caracterAtual == '_' || caracterAtual.IsFimDaLinha())
+                    else if (caracterAtual.IsDigito() || caracterAtual.IsLetra() || caracterAtual.IsFimDaLinha())
                     {
                         Estado = 8;
                         lexema.Append(caracterAtual);
                     }
                     else
                     {
-                        LancarExcecaoLexica(lexema);
+                        Estado = 0;
+                        return Token(TipoToken.IDENTIFICADOR, lexema);
                     }
                     break;
                 case 24:
@@ -429,14 +449,15 @@ public class LexicalAnalyser
                         Estado = 14;
                         lexema.Append(caracterAtual);
                     }
-                    else if (caracterAtual.IsDigito() || caracterAtual.IsLetra() || caracterAtual == '_' || caracterAtual.IsFimDaLinha())
+                    else if (caracterAtual.IsDigito() || caracterAtual.IsLetra() || caracterAtual.IsFimDaLinha())
                     {
                         Estado = 8;
                         lexema.Append(caracterAtual);
                     }
                     else
                     {
-                        LancarExcecaoLexica(lexema);
+                        Estado = 0;
+                        return Token(TipoToken.IDENTIFICADOR, lexema);
                     }
                     break;
                 case 25:
@@ -445,14 +466,15 @@ public class LexicalAnalyser
                         Estado = 26;
                         lexema.Append(caracterAtual);
                     }
-                    else if (caracterAtual.IsDigito() || caracterAtual.IsLetra() || caracterAtual == '_' || caracterAtual.IsFimDaLinha())
+                    else if (caracterAtual.IsDigito() || caracterAtual.IsLetra() || caracterAtual.IsFimDaLinha())
                     {
                         Estado = 8;
                         lexema.Append(caracterAtual);
                     }
                     else
                     {
-                        LancarExcecaoLexica(lexema);
+                        Estado = 0;
+                        return Token(TipoToken.IDENTIFICADOR, lexema);
                     }
                     break;
                 case 26:
@@ -461,14 +483,15 @@ public class LexicalAnalyser
                         Estado = 27;
                         lexema.Append(caracterAtual);
                     }
-                    else if (caracterAtual.IsDigito() || caracterAtual.IsLetra() || caracterAtual == '_' || caracterAtual.IsFimDaLinha())
+                    else if (caracterAtual.IsDigito() || caracterAtual.IsLetra() || caracterAtual.IsFimDaLinha())
                     {
                         Estado = 8;
                         lexema.Append(caracterAtual);
                     }
                     else
                     {
-                        LancarExcecaoLexica(lexema);
+                        Estado = 0;
+                        return Token(TipoToken.IDENTIFICADOR, lexema);
                     }
                     break;
                 case 27:
@@ -477,14 +500,15 @@ public class LexicalAnalyser
                         Estado = 14;
                         lexema.Append(caracterAtual);
                     }
-                    else if (caracterAtual.IsDigito() || caracterAtual.IsLetra() || caracterAtual == '_' || caracterAtual.IsFimDaLinha())
+                    else if (caracterAtual.IsDigito() || caracterAtual.IsLetra() || caracterAtual.IsFimDaLinha())
                     {
                         Estado = 8;
                         lexema.Append(caracterAtual);
                     }
                     else
                     {
-                        LancarExcecaoLexica(lexema);
+                        Estado = 0;
+                        return Token(TipoToken.IDENTIFICADOR, lexema);
                     }
                     break;
                 case 28:
@@ -493,14 +517,15 @@ public class LexicalAnalyser
                         Estado = 29;
                         lexema.Append(caracterAtual);
                     }
-                    else if (caracterAtual.IsDigito() || caracterAtual.IsLetra() || caracterAtual == '_' || caracterAtual.IsFimDaLinha())
+                    else if (caracterAtual.IsDigito() || caracterAtual.IsLetra() || caracterAtual.IsFimDaLinha())
                     {
                         Estado = 8;
                         lexema.Append(caracterAtual);
                     }
                     else
                     {
-                        LancarExcecaoLexica(lexema);
+                        Estado = 0;
+                        return Token(TipoToken.IDENTIFICADOR, lexema);
                     }
                     break;
                 case 29:
@@ -509,14 +534,15 @@ public class LexicalAnalyser
                         Estado = 30;
                         lexema.Append(caracterAtual);
                     }
-                    else if (caracterAtual.IsDigito() || caracterAtual.IsLetra() || caracterAtual == '_' || caracterAtual.IsFimDaLinha())
+                    else if (caracterAtual.IsDigito() || caracterAtual.IsLetra() || caracterAtual.IsFimDaLinha())
                     {
                         Estado = 8;
                         lexema.Append(caracterAtual);
                     }
                     else
                     {
-                        LancarExcecaoLexica(lexema);
+                        Estado = 0;
+                        return Token(TipoToken.IDENTIFICADOR, lexema);
                     }
                     break;
                 case 30:
@@ -525,14 +551,15 @@ public class LexicalAnalyser
                         Estado = 27;
                         lexema.Append(caracterAtual);
                     }
-                    else if (caracterAtual.IsDigito() || caracterAtual.IsLetra() || caracterAtual == '_' || caracterAtual.IsFimDaLinha())
+                    else if (caracterAtual.IsDigito() || caracterAtual.IsLetra() || caracterAtual.IsFimDaLinha())
                     {
                         Estado = 8;
                         lexema.Append(caracterAtual);
                     }
                     else
                     {
-                        LancarExcecaoLexica(lexema);
+                        Estado = 0;
+                        return Token(TipoToken.IDENTIFICADOR, lexema);
                     }
                     break;
                 case 31:
@@ -541,19 +568,52 @@ public class LexicalAnalyser
                         Estado = 14;
                         lexema.Append(caracterAtual);
                     }
-                    else if (caracterAtual.IsDigito() || caracterAtual.IsLetra() || caracterAtual == '_' || caracterAtual.IsFimDaLinha())
+                    else if (caracterAtual.IsDigito() || caracterAtual.IsLetra() || caracterAtual.IsFimDaLinha())
                     {
                         Estado = 8;
                         lexema.Append(caracterAtual);
                     }
                     else
                     {
-                        LancarExcecaoLexica(lexema);
+                        Estado = 0;
+                        return Token(TipoToken.IDENTIFICADOR, lexema);
                     }
                     break;
                 case 33:
                     Estado = 0;
                     return Token(TipoToken.OPERADOR_ARITMETICO, lexema);
+                case 34:
+                    if (caracterAtual == '=')
+                    {
+                        Estado = 10;
+                        lexema.Append(caracterAtual);
+                    }
+                    else
+                    {
+                        Estado = 0;
+                        return Token(TipoToken.OPERADOR_ATRIBUICAO, lexema);
+                    }
+                    break;
+                case 35:
+                    if (caracterAtual is '"')
+                    {
+                        Estado = 37;
+                        lexema.Append(caracterAtual);
+                    }
+                    else if (!caracterAtual.IsLetra() || caracterAtual is not '_' || !caracterAtual.IsDigito())
+                    {
+                        LancarExcecaoLexica(lexema);
+                    }
+                    break;
+                case 36:
+                    if (caracterAtual is '"')
+                    {
+                        return Token(TipoToken.STRING, lexema);
+                    }
+                    else
+                    {
+                        LancarExcecaoLexica(lexema);
+                    }
                     break;
                 default:
                     LancarExcecaoLexica(lexema);
@@ -565,7 +625,8 @@ public class LexicalAnalyser
     private Token Token(TipoToken tipoToken, StringBuilder lexema)
     {
         Voltar();
-        return new Token(tipoToken, lexema.ToString(), Linha, Coluna);
+        var coluna = Coluna - lexema.Length;
+        return new Token(tipoToken, lexema.ToString(), Linha, coluna);
     }
 
     private void Voltar()
@@ -573,7 +634,7 @@ public class LexicalAnalyser
         if (!FimDeArquivo())
         {
             Coluna -= 1;
-            Position -= 1;
+            Posicao -= 1;
         }
     }
 
@@ -585,7 +646,8 @@ public class LexicalAnalyser
 
     private void LancarExcecaoLexica(StringBuilder lexema)
     {
-        throw new LexicalException($"Caracter inválido encontrado: {lexema} | Linha: {Linha} | Coluna: {Coluna}");
+        var coluna = Coluna > 1 ? Coluna - 1 : Coluna;
+        throw new LexicalException($"Caracter inválido encontrado: {lexema} | Linha: {Linha} | Coluna: {coluna - 1}");
     }
 
     private char ProximoCaracter()
@@ -593,14 +655,17 @@ public class LexicalAnalyser
         if (FimDeArquivo())
             return '\0';
 
-        var character = Content[Position];
-        Position++;
-        Coluna++;
-        return character;
+        var caracter = ConteudoArquivo[Posicao];
+        Posicao++;
+        if (caracter is '\t')
+            Coluna += 5;
+        else if (!caracter.IsFimDaLinha())
+            Coluna++;
+        return caracter;
     }
 
     private bool FimDeArquivo()
     {
-        return Position == Content.Length;
+        return Posicao == ConteudoArquivo.Length;
     }
 }
