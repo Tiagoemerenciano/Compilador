@@ -4,18 +4,18 @@
     {
         public static void Main(string[] args)
         {
-            var code = ReadCodeFile("entrada_teste1.txt");
+            var codigo = LerCodigoDoArquivo("entrada_teste1.txt");
 
-            LexicalAnalyser lexicalAnalyser = new(code.ToCharArray());
+            AnalisadorLexico analisadorLexico = new AnalisadorLexico(codigo.ToCharArray());
 
-            lexicalAnalyser.SalvarTokensNoArquivoDeSaida();
+            analisadorLexico.SalvarTokensNoArquivoDeSaida();
         }
 
-        public static string ReadCodeFile(string fileName)
+        public static string LerCodigoDoArquivo(string nomeArquivo)
         {
-            using (var codeText = new StreamReader(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), fileName)))
+            using (var textoCodigo = new StreamReader(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), nomeArquivo)))
             {
-                return codeText.ReadToEnd();
+                return textoCodigo.ReadToEnd();
             }
         }
     }

@@ -5,14 +5,14 @@ namespace UNICAP.Compilador.Lexical
     public class Token
     {
         public TipoToken Tipo { get; set; }
-        public string Texto { get; }
+        public string Lexema { get; }
         public int Linha { get; }
         public int Coluna { get; }
 
         public Token(TipoToken tipo, string termo, int linha, int coluna)
         {
             Tipo = tipo;
-            Texto = termo;
+            Lexema = termo;
             Linha = linha;
             Coluna = coluna;
         }
@@ -20,7 +20,7 @@ namespace UNICAP.Compilador.Lexical
         public override string ToString()
         {
             return $"Tipo: {Tipo.GetDescription()} | " +
-                   $"Texto: {Texto} | " +
+                   $"Texto: {Lexema} | " +
                    $"Linha: {Linha} | " +
                    $"Coluna: {Coluna}";
         }

@@ -4,33 +4,32 @@ using UNICAP.Compilador.Utils;
 
 namespace UNICAP.Compilador;
 
-public class LexicalAnalyser
+public class AnalisadorLexico
 {
-    public const string NOME_ARQUIVO_SAIDA = "output.txt";
+    public const string NOME_ARQUIVO_SAIDA = "tokens_lidos.txt";
 
     public char[] ConteudoArquivo { get; set; }
     public int Estado { get; set; } = 0;
     public int Posicao { get; set; } = 0;
     public int Linha { get; set; } = 1;
-    public int Coluna { get; set; } = 1;
+    public int Coluna { get; set; } = 0;
     public List<Token> Tokens { get; set; } = new List<Token>();
 
-    public LexicalAnalyser(char[] conteudoArquivo)
+    public AnalisadorLexico(char[] conteudoArquivo)
     {
-        ConteudoArquivo = conteudoArquivo;
-        ConteudoArquivo = ConteudoArquivo.Append(' ').ToArray();
+        ConteudoArquivo = conteudoArquivo.Append(' ').ToArray();
         while (true)
         {
             var token = GetNextToken();
 
-            if (token != null)
-            {
-                Tokens.Add(token);
-            }
-            else
+            if (token == null)
             {
                 Posicao = 0;
                 break;
+            }
+            else
+            {
+                Tokens.Add(token);
             }
         }
     }
@@ -49,7 +48,9 @@ public class LexicalAnalyser
     private Token? GetNextToken()
     {
         if (FimDeArquivo())
+        {
             return null;
+        }
 
         var lexema = new StringBuilder();
         Estado = 0;
@@ -597,22 +598,22 @@ public class LexicalAnalyser
                 case 35:
                     if (caracterAtual is '"')
                     {
-                        Estado = 37;
+                        Estado = 36;
                         lexema.Append(caracterAtual);
                     }
-                    else if (!caracterAtual.IsLetra() || caracterAtual is not '_' || !caracterAtual.IsDigito())
+                    else if (!caracterAtual.IsLetra() && caracterAtual is not '_' && !caracterAtual.IsDigito())
                     {
                         LancarExcecaoLexica(lexema);
-                    }
-                    break;
-                case 36:
-                    if (caracterAtual is '"')
-                    {
-                        return Token(TipoToken.STRING, lexema);
                     }
                     else
                     {
-                        LancarExcecaoLexica(lexema);
+                        lexema.Append(caracterAtual);
+                    }
+                    break;
+                case 36:
+                    if (caracterAtual is not '"')
+                    {
+                        return Token(TipoToken.STRING, lexema);
                     }
                     break;
                 default:
@@ -658,9 +659,13 @@ public class LexicalAnalyser
         var caracter = ConteudoArquivo[Posicao];
         Posicao++;
         if (caracter is '\t')
+        {
             Coluna += 5;
+        }
         else if (!caracter.IsFimDaLinha())
+        {
             Coluna++;
+        }
         return caracter;
     }
 
