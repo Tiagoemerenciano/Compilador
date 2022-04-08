@@ -42,8 +42,10 @@ public class AnalisadorLexico
             foreach (var token in Tokens)
             {
                 streamWriter.WriteLine(token.ToString());
+                Console.WriteLine(token);
             }
         }
+        Console.WriteLine($"Tokens salvos com sucesso: {diretorio}");
     }
 
     private Token? GetNextToken()

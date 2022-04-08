@@ -14,8 +14,9 @@ Tipo: Identificador | Texto: a | Linha: 5 | Coluna: 10
 Tipo: Operador Aritmético | Texto: / | Linha: 5 | Coluna: 11
 Tipo: Inteiro | Texto: 2 | Linha: 5 | Coluna: 12
 Tipo: Operador Relacional | Texto: == | Linha: 5 | Coluna: 14
-Tipo: Char | Texto: '0' | Linha: 5 | Coluna: 21
-Tipo: Caracter Especial | Texto: { | Linha: 5 | Coluna: 22
+Tipo: Inteiro | Texto: 0 | Linha: 5 | Coluna: 17
+Tipo: Caracter Especial | Texto: ) | Linha: 5 | Coluna: 18
+Tipo: Caracter Especial | Texto: { | Linha: 5 | Coluna: 20
 Tipo: Identificador | Texto: return | Linha: 6 | Coluna: 11
 Tipo: String | Texto: "true" | Linha: 6 | Coluna: 18
 Tipo: Caracter Especial | Texto: ; | Linha: 6 | Coluna: 24
@@ -23,7 +24,7 @@ Tipo: Caracter Especial | Texto: } | Linha: 7 | Coluna: 6
 Tipo: Palavra Reservada | Texto: else | Linha: 7 | Coluna: 8
 Tipo: Caracter Especial | Texto: { | Linha: 7 | Coluna: 13
 Tipo: Identificador | Texto: return | Linha: 8 | Coluna: 11
-Tipo: String | Texto: "false" | Linha: 8 | Coluna: 19
-Tipo: Caracter Especial | Texto: ; | Linha: 8 | Coluna: 26
+Tipo: String | Texto: "false" | Linha: 8 | Coluna: 18
+Tipo: Caracter Especial | Texto: ; | Linha: 8 | Coluna: 25
 Tipo: Caracter Especial | Texto: } | Linha: 9 | Coluna: 6
 Tipo: Caracter Especial | Texto: } | Linha: 10 | Coluna: 2

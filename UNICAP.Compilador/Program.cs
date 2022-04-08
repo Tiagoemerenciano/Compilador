@@ -4,6 +4,17 @@
     {
         public static void Main(string[] args)
         {
+            string caminhoArquivo = RecuperarCaminhoArquivo(args);
+
+            var codigo = LerCodigoDoArquivo(caminhoArquivo);
+
+            AnalisadorLexico analisadorLexico = new AnalisadorLexico(codigo.ToCharArray());
+
+            analisadorLexico.SalvarTokensNoArquivoDeSaida();
+        }
+
+        private static string RecuperarCaminhoArquivo(string[] args)
+        {
             string caminhoArquivo;
 
             if (args.Length == 0)
@@ -14,12 +25,8 @@
             {
                 caminhoArquivo = args[0];
             }
-            
-            var codigo = LerCodigoDoArquivo(caminhoArquivo);
 
-            AnalisadorLexico analisadorLexico = new AnalisadorLexico(codigo.ToCharArray());
-
-            analisadorLexico.SalvarTokensNoArquivoDeSaida();
+            return caminhoArquivo;
         }
 
         public static string LerCodigoDoArquivo(string caminhoArquivo)
