@@ -612,10 +612,7 @@ public class AnalisadorLexico
                     }
                     break;
                 case 36:
-                    if (caracterAtual is not '"')
-                    {
-                        return Token(TipoToken.STRING, lexema);
-                    }
+                    return Token(TipoToken.STRING, lexema);
                     break;
                 default:
                     LancarExcecaoLexica(lexema);

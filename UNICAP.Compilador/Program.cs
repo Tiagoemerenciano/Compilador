@@ -4,12 +4,18 @@
     {
         public static void Main(string[] args)
         {
+            string caminhoArquivo;
+
             if (args.Length == 0)
             {
-                throw new ArgumentException("Nenhum caminho de arquivo foi informado.");
+                caminhoArquivo = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "\\entrada_teste.txt";
+            }
+            else
+            {
+                caminhoArquivo = args[0];
             }
             
-            var codigo = LerCodigoDoArquivo(args[0]);
+            var codigo = LerCodigoDoArquivo(caminhoArquivo);
 
             AnalisadorLexico analisadorLexico = new AnalisadorLexico(codigo.ToCharArray());
 
