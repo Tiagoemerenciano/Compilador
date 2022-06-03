@@ -8,7 +8,8 @@
 
             var codigo = LerCodigoDoArquivo(caminhoArquivo);
 
-            AnalisadorLexico analisadorLexico = new AnalisadorLexico(codigo.ToCharArray());
+            AnalisadorLexico analisadorLexico = new(codigo.ToCharArray());
+            new Parser.Parser(analisadorLexico);
 
             analisadorLexico.SalvarTokensNoArquivoDeSaida();
         }

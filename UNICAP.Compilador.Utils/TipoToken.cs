@@ -4,25 +4,25 @@ namespace UNICAP.Compilador.Utils
 {
     public enum TipoToken
     {
-        [Description("Float")]
+        [Description("float")]
         FLOAT = 0,
-        [Description("Char")]
+        [Description("char")]
         CHAR = 1,
-        [Description("Identificador")]
+        [Description("identificador")]
         IDENTIFICADOR = 2,
-        [Description("Operador Relacional")]
+        [Description("operador relacional")]
         OPERADOR_RELACIONAL = 3,
-        [Description("Operador Aritmético")]
+        [Description("operador aritmético")]
         OPERADOR_ARITMETICO = 4,
-        [Description("Operador Atribuição")]
+        [Description("operador atribuição")]
         OPERADOR_ATRIBUICAO = 5,
-        [Description("Caracter Especial")]
+        [Description("caracter especial")]
         CARACTER_ESPECIAL = 6,
-        [Description("Palavra Reservada")]
+        [Description("palavra reservada")]
         PALAVRA_RESERVADA = 7,
-        [Description("String")]
+        [Description("string")]
         STRING = 8,
-        [Description("Inteiro")]
+        [Description("int")]
         INTEIRO = 9
     }
 }

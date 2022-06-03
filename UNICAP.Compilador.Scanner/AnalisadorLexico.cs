@@ -48,7 +48,7 @@ public class AnalisadorLexico
         Console.WriteLine($"Tokens salvos com sucesso: {diretorio}");
     }
 
-    private Token? GetNextToken()
+    public Token? GetNextToken()
     {
         if (FimDeArquivo())
         {
@@ -615,7 +615,6 @@ public class AnalisadorLexico
                     break;
                 case 36:
                     return Token(TipoToken.STRING, lexema);
-                    break;
                 default:
                     LancarExcecaoLexica(lexema);
                     break;
