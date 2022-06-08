@@ -13,7 +13,7 @@ public class AnalisadorLexico
     public int Posicao { get; set; } = 0;
     public int Linha { get; set; } = 1;
     public int Coluna { get; set; } = 1;
-    public List<Token> Tokens { get; set; } = new List<Token>();
+    public IList<Token> Tokens { get; set; } = new List<Token>();
 
     public AnalisadorLexico(char[] conteudoArquivo)
     {
@@ -46,6 +46,11 @@ public class AnalisadorLexico
             }
         }
         Console.WriteLine($"Tokens salvos com sucesso: {diretorio}");
+    }
+
+    public Token GetPreviousToken(Token tokenAtual, int quantidadeIndicesParaVoltar = 1)
+    {
+        return Tokens[Tokens.IndexOf(tokenAtual) - quantidadeIndicesParaVoltar];
     }
 
     public Token? GetNextToken()

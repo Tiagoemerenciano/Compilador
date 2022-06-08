@@ -19,10 +19,14 @@ namespace UNICAP.Compilador.Parser
         private const string SINAL_ADICAO = "+";
         private const string SINAL_MULTIPLICACAO = "*";
         private const string SINAL_DIVISAO = "/";
+        private const string FLOAT = "float";
+        private const string CHAR = "char";
+        private const string STRING = "string";
 
         private AnalisadorLexico AnalisadorLexico { get; set; }
         private Token Token { get; set; }
         private IList<Sintaxe> Sintaxes { get; set; } = new List<Sintaxe>();
+        private int Escopo = 0;
 
         public Parser(AnalisadorLexico analisadorLexico)
         {
@@ -33,19 +37,19 @@ namespace UNICAP.Compilador.Parser
 
         private void Programa()
         {
-            Token = AnalisadorLexico.GetNextToken();
+            GetNextToken();
             if (Token.Lexema != INT)
                 LancarExcecaoSintatica();
 
-            Token = AnalisadorLexico.GetNextToken();
+            GetNextToken();
             if (Token.Lexema != MAIN)
                 LancarExcecaoSintatica();
 
-            Token = AnalisadorLexico.GetNextToken();
+            GetNextToken();
             if (Token.Lexema != ABRE_PARENTESE)
                 LancarExcecaoSintatica();
 
-            Token = AnalisadorLexico.GetNextToken();
+            GetNextToken();
             if (Token.Lexema != FECHA_PARENTESE)
                 LancarExcecaoSintatica();
 
@@ -58,225 +62,310 @@ namespace UNICAP.Compilador.Parser
         /// </summary>
         private void Bloco()
         {
-            Token = AnalisadorLexico.GetNextToken();
+            GetNextToken();
             if (Token.Lexema != ABRE_CHAVE)
                 LancarExcecaoSintatica();
 
-            DeclaracaoVariavel();
-            Comando();
+            GetNextToken();
+            do
+            {
+                DeclaracaoVariavel();
+            } while (IsDeclaracaoVariavel());
 
-            Token = AnalisadorLexico.GetNextToken();
+            
+            GetNextToken();
+            do
+            {
+                Comando();
+            } while (IsComando());
+
+            GetNextToken();
             if (Token.Lexema != FECHA_CHAVE)
                 LancarExcecaoSintatica();
         }
 
+        private bool IsComando()
+        {
+            return Token.Lexema == IF || Token.Lexema == WHILE || Token.Tipo == TipoToken.IDENTIFICADOR;
+        }
+
         /// <summary>
         /// Realiza a validação do COMANDO
-        /// <comando_basico> | <iteracao> | if <expressao_relacional> <comando> else <comando>
+        /// <comando_basico> | <iteracao> | if (<expressao_relacional>) <comando> else <comando>
         /// </summary>
-        private void Comando()
+        private bool Comando()
         {
-            if (IsComandoBasico())
+            if (ComandoBasico())
             {
-                ComandoBasico();
+                return true;
             }
-            else if (IsIteracao())
+            else if (Iteracao())
             {
-                Iteracao();
+                return true;
             }
             else
             {
-                Token = AnalisadorLexico.GetNextToken();
+                GetNextToken();
                 if (Token.Lexema != IF)
                     LancarExcecaoSintatica();
 
-                Token = AnalisadorLexico.GetNextToken();
+                GetNextToken();
                 if (Token.Lexema != ABRE_PARENTESE)
                     LancarExcecaoSintatica();
 
                 ExpressaoRelacional();
 
-                Token = AnalisadorLexico.GetNextToken();
+                GetNextToken();
                 if (Token.Lexema != FECHA_PARENTESE)
                     LancarExcecaoSintatica();
 
                 Comando();
 
-                Token = AnalisadorLexico.GetNextToken();
+                GetNextToken();
                 if (Token.Lexema != ELSE)
                     LancarExcecaoSintatica();
 
                 Comando();
             }
-            
+            return true;
         }
 
         /// <summary>
         /// Realiza a validação da EXPRESSÃO RELACIONAL
-        ///     <expressao_aritmetica> <operador_relacional> <expressao_aritmetica>
+        /// <expressao_aritmetica> <operador_relacional> <expressao_aritmetica>
         /// </summary>
         private void ExpressaoRelacional()
         {
             ExpressaoAritmetica();
 
-            Token = AnalisadorLexico.GetNextToken();
+            GetNextToken();
             if (Token.Tipo != TipoToken.OPERADOR_RELACIONAL)
                 LancarExcecaoSintatica();
 
             ExpressaoAritmetica();
         }
 
-        private bool IsIteracao()
+        private bool Iteracao()
         {
-            throw new NotImplementedException();
-        }
 
-        private bool IsComandoBasico()
-        {
-            throw new NotImplementedException();
-        }
-
-        private void Iteracao()
-        {
-            Token = AnalisadorLexico.GetNextToken();
             if (Token.Lexema != WHILE)
                 LancarExcecaoSintatica();
 
-            Token = AnalisadorLexico.GetNextToken();
+
             if (Token.Lexema != ABRE_PARENTESE)
                 LancarExcecaoSintatica();
 
             ExpressaoRelacional();
 
-            Token = AnalisadorLexico.GetNextToken();
+
             if (Token.Lexema != FECHA_PARENTESE)
                 LancarExcecaoSintatica();
 
             Comando();
+
+            return true;
         }
 
-        private void ComandoBasico()
+        /// <summary>
+        /// <atribuicao> | <bloco> | if (<expressao_relacional>) <comando> else <comando>
+        /// </summary>
+        /// <returns></returns>
+        private bool ComandoBasico()
         {
-            if (IsAtribuicao())
-                Atribuicao();
+            if (Atribuicao())
+                return true;
+            else if (Token.Lexema == IF)
+            {
+                if (Token.Lexema != ABRE_PARENTESE)
+                    return false;
+
+                ExpressaoRelacional();
+
+                GetNextToken();
+                if (Token.Lexema != FECHA_PARENTESE)
+                    return false;
+
+                Comando();
+
+                GetNextToken();
+                if (Token.Lexema != ELSE)
+                    return false;
+
+                Comando();
+            }
             else
                 Bloco();
-        }
 
-        private bool IsAtribuicao()
-        {
-            throw new NotImplementedException();
+            return true;
         }
 
         /// <summary>
         /// Realiza a validação da ATRIBUIÇÃO
         /// <identificador> <operador_atribuicao> <expressao_aritmetica>;
         /// </summary>
-        private void Atribuicao()
+        private bool Atribuicao()
         {
-            Token = AnalisadorLexico.GetNextToken();
             if (Token.Tipo != TipoToken.IDENTIFICADOR)
-                LancarExcecaoSintatica();
+                return false;
 
-            Token = AnalisadorLexico.GetNextToken();
+            GetNextToken();
             if (Token.Tipo != TipoToken.OPERADOR_ATRIBUICAO)
-                LancarExcecaoSintatica();
+                return false;
 
+            GetNextToken();
             ExpressaoAritmetica();
 
-            Token = AnalisadorLexico.GetNextToken();
+            GetNextToken();
             if (Token.Lexema != PONTO_E_VIRGULA)
-                LancarExcecaoSintatica();
+                return false;
+
+            return true;
         }
 
         /// <summary>
         /// Realiza a validação da EXPRESSÃO ARITMÉTICA
         /// <expressao_aritmetica> + <termo> | <expressao_aritmetica> - <termo> | <termo> 
         /// </summary>
-        private void ExpressaoAritmetica()
+        private Sintaxe ExpressaoAritmetica(bool validacao = false)
         {
-            Token = AnalisadorLexico.GetNextToken();
-            if (Termo())
-                return;
+            var sintaxe1 = Termo();
 
-            ExpressaoAritmetica();
-            Token = AnalisadorLexico.GetNextToken();
-            if (Token.Lexema == SINAL_SUBTRACAO || Token.Lexema == SINAL_ADICAO)
-                Termo();
-            else
-                LancarExcecaoSintatica();
+            while (Token.Lexema == SINAL_ADICAO || Token.Lexema == SINAL_SUBTRACAO)
+            {
+                var operador = Token.Lexema;
+
+                GetNextToken();
+
+                var sintaxe2 = Termo();
+
+                ValidarOperacaoExpressaoAritmetica(sintaxe1.Token.Tipo, sintaxe2.Token.Tipo);
+
+                if (sintaxe1.Token.Tipo == TipoToken.FLOAT || sintaxe2.Token.Tipo == TipoToken.FLOAT)
+                {
+                    sintaxe1.Token.Tipo = TipoToken.FLOAT;
+                    sintaxe2.Token.Tipo = TipoToken.FLOAT;
+                }
+            }
+
+            return sintaxe1;
         }
 
         /// <summary>
         /// Realiza a validação do TERMO
         /// <termo> * <fator> | <termo> / <fator> | <fator>
         /// </summary>
-        private bool Termo()
+        private Sintaxe Termo()
         {
-            if (Fator())
-                return true;
-            else
+            var sintaxe1 = Fator();
+
+            while (Token.Lexema == SINAL_MULTIPLICACAO || Token.Lexema == SINAL_DIVISAO)
             {
-                Termo();
+                var operador = Token.Lexema;
+                GetNextToken();
+                var sintaxe2 = Fator();
 
-                Token = AnalisadorLexico.GetNextToken();
-                if (Token.Lexema == SINAL_MULTIPLICACAO || Token.Lexema == SINAL_DIVISAO)
-                    Fator();
-                else
-                    LancarExcecaoSintatica();
+                if (sintaxe1.Token.Tipo == TipoToken.FLOAT || sintaxe2.Token.Tipo == TipoToken.FLOAT)
+                {
+                    if (sintaxe1.Token.Tipo == TipoToken.INTEIRO)
+                        sintaxe1.Token.Tipo = TipoToken.FLOAT;
+                    if (sintaxe2.Token.Tipo == TipoToken.INTEIRO)
+                        sintaxe2.Token.Tipo = TipoToken.FLOAT;
+                }
 
-                return true;
+                if (operador == SINAL_DIVISAO)
+                    sintaxe1.Token.Tipo = TipoToken.FLOAT;
             }
 
-            return false;
+            return sintaxe1;
         }
 
         /// <summary>
         /// Realiza a validação do FATOR
-        /// (<expressao_aritmetica>) | <identificador> | <tipo>
+        /// (<expressao_aritmetica>) | <identificador> | <float> | <int> | <char> | <string>
         /// </summary>
-        private bool Fator()
+        private Sintaxe Fator()
         {
-            Token = AnalisadorLexico.GetNextToken();
-            if (Tipo())
-                return true;
-            else if (Identificador())
-                return true;
+            if (Token.Lexema == ABRE_PARENTESE)
+            {
+                var sintaxe = ExpressaoAritmetica();
+                GetNextToken();
+                if (Token.Lexema != FECHA_PARENTESE)
+                    LancarExcecaoSintatica();
+                return sintaxe;
+            }
             else
             {
-                Token = AnalisadorLexico.GetNextToken();
-                if (Token.Lexema == ABRE_PARENTESE)
+                if (Token.Tipo == TipoToken.IDENTIFICADOR)
                 {
-                    ExpressaoAritmetica();
+                    var identificadorDeclarado = BuscarIdentificador(Token.Lexema);
 
-                    Token = AnalisadorLexico.GetNextToken();
-                    if (Token.Lexema != FECHA_PARENTESE)
-                        LancarExcecaoSintatica();
+                    if (identificadorDeclarado != null)
+                    {
+                        return new Sintaxe(Token, identificadorDeclarado.Tipo, Escopo);
+                    }
+                    else
+                    {
+                        LancarExcecaoSintatica("Variável não declarada");
+                    }
+                }
+                else if (Token.Tipo == TipoToken.CHAR || Token.Tipo == TipoToken.FLOAT || Token.Tipo == TipoToken.INTEIRO || Token.Tipo == TipoToken.STRING)
+                {
+                    return new Sintaxe(Token, (int)TipoSintaxe.FATOR, Escopo);
                 }
                 else
-                    LancarExcecaoSintatica();
+                {
+                    LancarExcecaoSintatica($"Token esperado: <identificador> | <float> | <int> | <char> | <string>. Token encontrado: ");
+                }
+            }
+
+            return new Sintaxe(Token, (int)TipoSintaxe.FATOR, Escopo);
+        }
+
+        private Sintaxe? BuscarIdentificador(string lexema)
+        {
+            return Sintaxes.FirstOrDefault(sintaxe => sintaxe.Token.Lexema == lexema);
+        }
+
+        /// <summary>
+        /// Realiza a validação de DECLARAÇÃO DE VARIÁVEL
+        /// <tipo> <identificador>;
+        /// </summary>
+        private bool DeclaracaoVariavel()
+        {
+            if (Tipo(validacao: true) is false)
+                return false;
+
+            GetNextToken();
+            if (Identificador(validacao: true) is false)
+                return false;
+
+            GetNextToken();
+            if (Token.Lexema != PONTO_E_VIRGULA)
+            {
+                LancarExcecaoSintatica("Declaração de variável inválida");
             }
 
             return true;
         }
 
-        private void DeclaracaoVariavel()
+        private bool IsDeclaracaoVariavel()
         {
-            Tipo();
-            Identificador();
-            if (Token.Lexema != PONTO_E_VIRGULA)
-                LancarExcecaoSintatica();
+            return Token.Lexema == TipoToken.CHAR.GetDescription() || Token.Lexema == TipoToken.FLOAT.GetDescription() || Token.Lexema == TipoToken.INTEIRO.GetDescription() || Token.Lexema == TipoToken.STRING.GetDescription();
         }
+
 
         /// <summary>
         /// Realiza a validação do TIPO
         /// int | float | char | string
         /// </summary>
-        private bool Tipo()
+        private bool Tipo(bool validacao = false)
         {
-            Token = AnalisadorLexico.GetNextToken();
-            if (Token.Tipo != TipoToken.INTEIRO || Token.Tipo != TipoToken.FLOAT || Token.Tipo != TipoToken.CHAR || Token.Tipo != TipoToken.STRING)
+            if (Token.Lexema != INT && Token.Lexema != FLOAT && Token.Lexema != CHAR && Token.Lexema != STRING)
+            {
+                if (validacao)
+                    return false;
                 LancarExcecaoSintatica();
+            }
 
             return true;
         }
@@ -285,33 +374,44 @@ namespace UNICAP.Compilador.Parser
         /// Realiza a validação do IDENTIFICADOR
         /// =
         /// </summary>
-        private bool Identificador()
+        private bool Identificador(bool validacao = false)
         {
-            Token = AnalisadorLexico.GetNextToken();
             if (Token.Tipo != TipoToken.IDENTIFICADOR)
+            {
+                if (validacao)
+                    return false;
+
                 LancarExcecaoSintatica();
+            }
 
             return true;
         }
 
-        private void LancarExcecaoSintatica()
+        private void LancarExcecaoSintatica(string? mensagem = null)
         {
             var coluna = Token.Coluna > 1 ? Token.Coluna - 1 : Token.Coluna;
 
             var descricaoToken = Token.Tipo.GetDescription() ?? "Sintaxe";
 
-            throw new LexicalException($"{descricaoToken} inválida encontrado: {Token.Lexema} | Linha: {Token.Linha} | Coluna: {coluna - 1}");
+            mensagem ??= $"{descricaoToken} inválida encontrado";
+
+            throw new LexicalException($"{mensagem}: {Token.Lexema} | Linha: {Token.Linha} | Coluna: {coluna - 1}");
         }
 
-        private void NovaSintaxe(Token token, int tipo, int escopo)
+        private void GetNextToken()
         {
-            Sintaxes.Add(new Sintaxe
-            {
-                Escopo = escopo,
-                Lexema = token.Lexema,
-                Tipo = tipo,
-                Token = token
-            });
+            Token = AnalisadorLexico.GetNextToken();
+        }
+        private TipoToken ValidarOperacaoExpressaoAritmetica(TipoToken tipo1, TipoToken tipo2)
+        {
+            if (tipo1 == TipoToken.INTEIRO && tipo2 == TipoToken.INTEIRO)
+                return TipoToken.INTEIRO;
+            else if ((tipo1 == TipoToken.INTEIRO && tipo2 == TipoToken.FLOAT) || (tipo1 == TipoToken.FLOAT && tipo2 == TipoToken.INTEIRO))
+                return TipoToken.FLOAT;
+            else if ((tipo1 == TipoToken.CHAR && tipo2 != TipoToken.CHAR) || (tipo2 == TipoToken.CHAR && tipo1 != TipoToken.CHAR))
+                LancarExcecaoSintatica("CHAR não opera com outros tipos de dados");
+
+            return TipoToken.CHAR;
         }
     }
 }
