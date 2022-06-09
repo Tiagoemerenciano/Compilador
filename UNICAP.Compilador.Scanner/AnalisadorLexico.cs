@@ -249,7 +249,7 @@ public class AnalisadorLexico
                     else
                     {
                         Estado = 0;
-                        return Token(TipoToken.OPERADOR_ATRIBUICAO, lexema);
+                        return Token(TipoToken.OPERADOR_RELACIONAL, lexema);
                     }
                     break;
                 case 10:

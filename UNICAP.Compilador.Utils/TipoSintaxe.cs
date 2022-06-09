@@ -11,6 +11,7 @@
         EXPRESSAO_RELACIONAL = 7,
         EXPRESSAO_ARITMETICA = 8,
         TERMO = 9,
-        FATOR = 10
+        FATOR = 10,
+        DECLARACAO_VARIAVEL = 11
     }
 }
