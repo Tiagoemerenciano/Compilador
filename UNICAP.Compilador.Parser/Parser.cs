@@ -249,8 +249,6 @@ namespace UNICAP.Compilador.Parser
             var sintaxeExpressaoAritmetica = ExpressaoAritmetica(tokenAnterior.Lexema);
 
             ValidarTiposAtribuicao(identificadorDeclarado.Token.Tipo, sintaxeExpressaoAritmetica.Token.Tipo);
-            
-            Sintaxes.Add(sintaxeExpressaoAritmetica);
 
             if (Token.Lexema != PONTO_E_VIRGULA)
                 return false;
@@ -383,7 +381,7 @@ namespace UNICAP.Compilador.Parser
         /// </summary>
         private void DeclaracaoVariavel()
         {
-            Tipo();
+            var tipo = Tipo();
 
             GetNextToken();
             Identificador();
@@ -391,7 +389,7 @@ namespace UNICAP.Compilador.Parser
             if (Sintaxes.Any(sintaxe => sintaxe.Token.Lexema == Token.Lexema && sintaxe.Escopo == Escopo))
                 LancarExcecaoSemantica("Variável já declarada no mesmo escopo");
 
-            Sintaxes.Add(new Sintaxe(Token, (int)Token.Tipo, Escopo));
+            Sintaxes.Add(new Sintaxe(Token, tipo, Escopo));
 
             GetNextToken();
             if (Token.Lexema != PONTO_E_VIRGULA)
@@ -410,14 +408,14 @@ namespace UNICAP.Compilador.Parser
         /// Realiza a validação do TIPO
         /// int | float | char | string
         /// </summary>
-        private string Tipo()
+        private int Tipo()
         {
             if (Token.Lexema != INT && Token.Lexema != FLOAT && Token.Lexema != CHAR && Token.Lexema != STRING)
             {
                 LancarExcecaoSintatica();
             }
 
-            return Token.Lexema;
+            return (int)Token.Lexema.GetValueByDescription<TipoToken>();
         }
 
         /// <summary>
