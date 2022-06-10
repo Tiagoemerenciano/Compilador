@@ -35,23 +35,26 @@ namespace UNICAP.Compilador.Parser
             Programa();
         }
 
+        /// <summary>
+        /// int main() <bloco>
+        /// </summary>
         private void Programa()
         {
             GetNextToken();
             if (Token.Lexema != INT)
-                LancarExcecaoSintatica();
+                LancarExcecaoSintatica($"Token esperado: int. Token encontrado: {Token.Lexema}");
 
             GetNextToken();
             if (Token.Lexema != MAIN)
-                LancarExcecaoSintatica();
+                LancarExcecaoSintatica($"Token esperado: main. Token encontrado: {Token.Lexema}");
 
             GetNextToken();
             if (Token.Lexema != ABRE_PARENTESE)
-                LancarExcecaoSintatica();
+                LancarExcecaoSintatica($"Token esperado: (. Token encontrado: {Token.Lexema}");
 
             GetNextToken();
             if (Token.Lexema != FECHA_PARENTESE)
-                LancarExcecaoSintatica();
+                LancarExcecaoSintatica($"Token esperado: ). Token encontrado: {Token.Lexema}");
 
             GetNextToken();
             Bloco();
@@ -67,7 +70,7 @@ namespace UNICAP.Compilador.Parser
 
             if (Token.Lexema != ABRE_CHAVE)
             {
-                LancarExcecaoSintatica();
+                LancarExcecaoSintatica($"Token esperado: {ABRE_CHAVE}. Token encontrado: {Token.Lexema}");
             }
 
             GetNextToken();
@@ -83,7 +86,7 @@ namespace UNICAP.Compilador.Parser
             }
 
             if (Token.Lexema != FECHA_CHAVE)
-                LancarExcecaoSintatica();
+                LancarExcecaoSintatica($"Token esperado: {FECHA_CHAVE}. Token encontrado: {Token.Lexema}");
 
             RemoverSintaxesDoEscopo();
 
@@ -122,13 +125,13 @@ namespace UNICAP.Compilador.Parser
             {
                 GetNextToken();
                 if (Token.Lexema != ABRE_PARENTESE)
-                    LancarExcecaoSintatica();
+                    LancarExcecaoSintatica($"Token esperado: {ABRE_PARENTESE}. Token encontrado: {Token.Lexema}");
 
                 GetNextToken();
                 ExpressaoRelacional();
 
                 if (Token.Lexema != FECHA_PARENTESE)
-                    LancarExcecaoSintatica();
+                    LancarExcecaoSintatica($"Token esperado: {FECHA_PARENTESE}. Token encontrado: {Token.Lexema}");
 
                 GetNextToken();
                 Comando();
@@ -159,13 +162,15 @@ namespace UNICAP.Compilador.Parser
         /// </summary>
         private void ExpressaoRelacional()
         {
-            ExpressaoAritmetica();
+            var sintaxe1 = ExpressaoAritmetica();
 
             if (Token.Tipo != TipoToken.OPERADOR_RELACIONAL)
-                LancarExcecaoSintatica();
+                LancarExcecaoSintatica($"Token do tipo Operador Relacional esperado. Token encontrado: {Token.Lexema}");
 
             GetNextToken();
-            ExpressaoAritmetica();
+            var sintaxe2 = ExpressaoAritmetica();
+
+            ValidarOperacaoExpressaoAritmetica(sintaxe1.Tipo, sintaxe2.Tipo);
         }
 
         private bool Iteracao()
@@ -242,13 +247,13 @@ namespace UNICAP.Compilador.Parser
             var identificadorDeclarado = BuscarIdentificadorNoEscopo(tokenAnterior.Lexema);
 
             if (identificadorDeclarado == null)
-                LancarExcecaoSemantica("Variável não declarada");
+                LancarExcecaoSemantica($"Variável não declarada: {tokenAnterior.Lexema}");
 
             GetNextToken();
 
             var sintaxeExpressaoAritmetica = ExpressaoAritmetica(tokenAnterior.Lexema);
 
-            ValidarTiposAtribuicao(identificadorDeclarado.Token.Tipo, sintaxeExpressaoAritmetica.Token.Tipo);
+            ValidarTiposIguais(identificadorDeclarado.Tipo, sintaxeExpressaoAritmetica.Tipo);
 
             if (Token.Lexema != PONTO_E_VIRGULA)
                 return false;
@@ -256,7 +261,7 @@ namespace UNICAP.Compilador.Parser
             return true;
         }
 
-        private void ValidarTiposAtribuicao(TipoToken tipo1, TipoToken tipo2)
+        private void ValidarTiposIguais(TipoToken tipo1, TipoToken tipo2)
         {
             if (tipo1 != tipo2)
                 LancarExcecaoSemantica($"Tipos incompatíveis: {tipo1} e {tipo2}");
@@ -309,10 +314,15 @@ namespace UNICAP.Compilador.Parser
                 GetNextToken();
                 var sintaxe2 = Fator();
 
+                ValidarOperacaoTermo(sintaxe1.Token.Tipo, sintaxe2.Token.Tipo);
+
                 if (sintaxe1.Token.Tipo == TipoToken.FLOAT || sintaxe2.Token.Tipo == TipoToken.FLOAT)
                 {
                     if (sintaxe1.Token.Tipo == TipoToken.INTEIRO)
+                    {
                         sintaxe1.Token.Tipo = TipoToken.FLOAT;
+                        sintaxe1.Tipo = TipoToken.FLOAT;
+                    }
                     if (sintaxe2.Token.Tipo == TipoToken.INTEIRO)
                         sintaxe2.Token.Tipo = TipoToken.FLOAT;
                 }
@@ -322,9 +332,19 @@ namespace UNICAP.Compilador.Parser
                     sintaxe1.Token.Tipo = TipoToken.FLOAT;
                     sintaxe2.Token.Tipo = TipoToken.FLOAT;
                 }
+                GetNextToken();
             }
 
             return sintaxe1;
+        }
+
+        private void ValidarOperacaoTermo(TipoToken tipo1, TipoToken tipo2)
+        {
+            if (tipo1 != TipoToken.FLOAT   &&
+                tipo2 != TipoToken.INTEIRO &&
+                tipo1 != TipoToken.INTEIRO &&
+                tipo2 != TipoToken.FLOAT)
+                LancarExcecaoSemantica("Tipos incompatíveis");
         }
 
         /// <summary>
@@ -339,7 +359,7 @@ namespace UNICAP.Compilador.Parser
                 var sintaxe = ExpressaoAritmetica();
                 GetNextToken();
                 if (Token.Lexema != FECHA_PARENTESE)
-                    LancarExcecaoSintatica();
+                    LancarExcecaoSintatica($"Token esperado: {FECHA_PARENTESE}. Token encontrado: {Token.Lexema}");
                 return sintaxe;
             }
             else
@@ -354,20 +374,20 @@ namespace UNICAP.Compilador.Parser
                     }
                     else
                     {
-                        LancarExcecaoSemantica("Variável não declarada");
+                        LancarExcecaoSemantica($"Variável não declarada: {Token.Lexema}");
                     }
                 }
                 else if (Token.Tipo == TipoToken.CHAR || Token.Tipo == TipoToken.FLOAT || Token.Tipo == TipoToken.INTEIRO || Token.Tipo == TipoToken.STRING)
                 {
-                    return new Sintaxe(Token, (int)TipoSintaxe.FATOR, Escopo);
+                    return new Sintaxe(Token, Token.Tipo, Escopo);
                 }
                 else
                 {
-                    LancarExcecaoSintatica($"Token esperado: <identificador> | <float> | <int> | <char> | <string>. Token encontrado: ");
+                    LancarExcecaoSintatica($"Token esperado: <identificador> | <float> | <int> | <char> | <string>. Token encontrado: {Token.Lexema}");
                 }
             }
 
-            return new Sintaxe(Token, (int)TipoSintaxe.FATOR, Escopo);
+            return new Sintaxe(Token, Token.Tipo, Escopo);
         }
 
         private Sintaxe? BuscarIdentificadorNoEscopo(string lexema)
@@ -387,15 +407,13 @@ namespace UNICAP.Compilador.Parser
             Identificador();
 
             if (Sintaxes.Any(sintaxe => sintaxe.Token.Lexema == Token.Lexema && sintaxe.Escopo == Escopo))
-                LancarExcecaoSemantica("Variável já declarada no mesmo escopo");
+                LancarExcecaoSemantica($"Variável já declarada no mesmo escopo: {Token.Lexema}");
 
             Sintaxes.Add(new Sintaxe(Token, tipo, Escopo));
 
             GetNextToken();
             if (Token.Lexema != PONTO_E_VIRGULA)
-            {
-                LancarExcecaoSintatica("Declaração de variável inválida");
-            }
+                LancarExcecaoSintatica($"Após uma declaração de variável, é esperado ';'. Valor encontrado: {Token.Lexema}");
         }
 
         private bool IsDeclaracaoVariavel()
@@ -408,29 +426,23 @@ namespace UNICAP.Compilador.Parser
         /// Realiza a validação do TIPO
         /// int | float | char | string
         /// </summary>
-        private int Tipo()
+        private TipoToken Tipo()
         {
             if (Token.Lexema != INT && Token.Lexema != FLOAT && Token.Lexema != CHAR && Token.Lexema != STRING)
             {
-                LancarExcecaoSintatica();
+                LancarExcecaoSintatica($"Token esperado: <float> | <int> | <char> | <string>. Token encontrado: {Token.Lexema}");
             }
 
-            return (int)Token.Lexema.GetValueByDescription<TipoToken>();
+            return Token.Lexema.GetValueByDescription<TipoToken>();
         }
 
         /// <summary>
-        /// Realiza a validação do IDENTIFICADOR
         /// =
         /// </summary>
-        private void Identificador(bool validacao = false)
+        private void Identificador()
         {
             if (Token.Tipo != TipoToken.IDENTIFICADOR)
-            {
-                if (validacao)
-                    return;
-
-                LancarExcecaoSintatica();
-            }
+                LancarExcecaoSintatica($"Token esperado: =. Token encontrado: {Token.Lexema}");
         }
 
         private void LancarExcecaoSintatica(string? mensagem = null)
@@ -441,7 +453,7 @@ namespace UNICAP.Compilador.Parser
 
             mensagem ??= $"{descricaoToken} inválida encontrado";
 
-            throw new ParserException($"{mensagem}: {Token.Lexema} | Linha: {Token.Linha} | Coluna: {coluna - 1}");
+            throw new ParserException($"{mensagem} | Linha: {Token.Linha} | Coluna: {coluna - 1}");
         }
 
         private void LancarExcecaoSemantica(string? mensagem = null)
@@ -452,7 +464,7 @@ namespace UNICAP.Compilador.Parser
 
             mensagem ??= $"{descricaoToken} inválida encontrado";
 
-            throw new SemanticaException($"{mensagem}: {Token.Lexema} | Linha: {Token.Linha} | Coluna: {coluna - 1}");
+            throw new SemanticaException($"{mensagem} | Linha: {Token.Linha} | Coluna: {coluna - 1}");
         }
 
         private void GetNextToken()

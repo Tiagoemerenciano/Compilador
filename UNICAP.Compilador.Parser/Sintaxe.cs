@@ -1,10 +1,11 @@
 ﻿using UNICAP.Compilador.Lexical;
+using UNICAP.Compilador.Utils;
 
 namespace UNICAP.Compilador.Parser
 {
     public class Sintaxe
     {
-        public Sintaxe(Token token, int tipo, int escopo, string identificador)
+        public Sintaxe(Token token, TipoToken tipo, int escopo, string identificador)
         {
             Token = token;
             Tipo = tipo;
@@ -12,7 +13,7 @@ namespace UNICAP.Compilador.Parser
             Identificador = identificador;
         }
 
-        public Sintaxe(Token token, int tipo, int escopo)
+        public Sintaxe(Token token, TipoToken tipo, int escopo)
         {
             Token = token;
             Tipo = tipo;
@@ -20,7 +21,7 @@ namespace UNICAP.Compilador.Parser
         }
 
         public Token Token { get; set; }
-        public int Tipo { get; set; }
+        public TipoToken Tipo { get; set; }
         public int Escopo { get; set; }
         public string? Identificador { get; set; }
     }
