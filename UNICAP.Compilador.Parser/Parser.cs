@@ -61,7 +61,6 @@ namespace UNICAP.Compilador.Parser
         }
 
         /// <summary>
-        /// Realiza a validação do BLOCO
         /// {<declaracao_variavel> <comando>}
         /// </summary>
         private void Bloco()
@@ -69,9 +68,7 @@ namespace UNICAP.Compilador.Parser
             Escopo++;
 
             if (Token.Lexema != ABRE_CHAVE)
-            {
                 LancarExcecaoSintatica($"Token esperado: {ABRE_CHAVE}. Token encontrado: {Token.Lexema}");
-            }
 
             GetNextToken();
             while (IsDeclaracaoVariavel())
@@ -108,7 +105,6 @@ namespace UNICAP.Compilador.Parser
         }
 
         /// <summary>
-        /// Realiza a validação do COMANDO
         /// <comando_basico> | <iteracao> | if (<expressao_relacional>) <comando> else <comando>
         /// </summary>
         private void Comando()
@@ -140,6 +136,9 @@ namespace UNICAP.Compilador.Parser
                     Comando();
             }
             GetNextToken();
+            
+            if (Token == null)
+                LancarExcecaoSintatica($"Token esperado: {FECHA_CHAVE}. Fim do arquivo.");
         }
 
         private bool IsIteracao()
@@ -157,7 +156,6 @@ namespace UNICAP.Compilador.Parser
         }
 
         /// <summary>
-        /// Realiza a validação da EXPRESSÃO RELACIONAL
         /// <expressao_aritmetica> <operador_relacional> <expressao_aritmetica>
         /// </summary>
         private void ExpressaoRelacional()
@@ -173,76 +171,78 @@ namespace UNICAP.Compilador.Parser
             ValidarOperacaoExpressaoAritmetica(sintaxe1.Tipo, sintaxe2.Tipo);
         }
 
-        private bool Iteracao()
+        /// <summary>
+        /// while (<expressao_relacional>) <comando>
+        /// </summary>
+        private void Iteracao()
         {
             if (Token.Lexema != WHILE)
-                return false;
+                LancarExcecaoSintatica($"Token esperado: while. Token encontrado: {Token.Lexema}");
 
             GetNextToken();
             if (Token.Lexema != ABRE_PARENTESE)
-                return false;
+                LancarExcecaoSintatica($"Token esperado: (. Token encontrado: {Token.Lexema}");
 
             GetNextToken();
             ExpressaoRelacional();
 
             if (Token.Lexema != FECHA_PARENTESE)
-                return false;
+                LancarExcecaoSintatica($"Token esperado: ). Token encontrado: {Token.Lexema}");
 
             Comando();
-
-            return true;
         }
 
         /// <summary>
         /// <atribuicao> | <bloco> | if (<expressao_relacional>) <comando> else <comando>
         /// </summary>
-        /// <returns></returns>
-        private bool ComandoBasico()
+        private void ComandoBasico()
         {
-            if (Atribuicao())
-                return true;
+            if (IsAtribuicao())
+            {
+                Atribuicao();
+            }
             else if (Token.Lexema == IF)
             {
                 GetNextToken();
                 if (Token.Lexema != ABRE_PARENTESE)
-                    return false;
+                    LancarExcecaoSintatica($"Token esperado: (. Token encontrado: {Token.Lexema}");
 
                 GetNextToken();
                 ExpressaoRelacional();
 
                 GetNextToken();
                 if (Token.Lexema != FECHA_PARENTESE)
-                    return false;
+                    LancarExcecaoSintatica($"Token esperado: ). Token encontrado: {Token.Lexema}");
 
                 Comando();
 
-                if (Token.Lexema != ELSE)
-                    return false;
-
-                Comando();
+                if (Token.Lexema == ELSE)
+                    Comando();
             }
             else
             {
                 Bloco();
             }
+        }
 
-            return true;
+        private bool IsAtribuicao()
+        {
+            return Token.Tipo == TipoToken.IDENTIFICADOR;
         }
 
         /// <summary>
-        /// Realiza a validação da ATRIBUIÇÃO
         /// <identificador> <operador_atribuicao> <expressao_aritmetica>;
         /// </summary>
-        private bool Atribuicao()
+        private void Atribuicao()
         {
             if (Token.Tipo != TipoToken.IDENTIFICADOR)
-                return false;
+                LancarExcecaoSintatica($"Token esperado: <identificador>. Token encontrado: {Token.Lexema}");
 
             var tokenAnterior = Token;
 
             GetNextToken();
             if (Token.Tipo != TipoToken.OPERADOR_ATRIBUICAO)
-                return false;
+                LancarExcecaoSintatica($"Token esperado: <operador_atribuicao>. Token encontrado: {Token.Lexema}");
 
             var identificadorDeclarado = BuscarIdentificadorNoEscopo(tokenAnterior.Lexema);
 
@@ -256,9 +256,7 @@ namespace UNICAP.Compilador.Parser
             ValidarTiposIguais(identificadorDeclarado.Tipo, sintaxeExpressaoAritmetica.Tipo);
 
             if (Token.Lexema != PONTO_E_VIRGULA)
-                return false;
-
-            return true;
+                LancarExcecaoSintatica($"Token esperado: ;. Token encontrado: {Token.Lexema}");
         }
 
         private void ValidarTiposIguais(TipoToken tipo1, TipoToken tipo2)
@@ -268,7 +266,6 @@ namespace UNICAP.Compilador.Parser
         }
 
         /// <summary>
-        /// Realiza a validação da EXPRESSÃO ARITMÉTICA
         /// <expressao_aritmetica> + <termo> | <expressao_aritmetica> - <termo> | <termo> 
         /// </summary>
         private Sintaxe ExpressaoAritmetica(string? identificador = null)
@@ -300,7 +297,6 @@ namespace UNICAP.Compilador.Parser
         }
 
         /// <summary>
-        /// Realiza a validação do TERMO
         /// <termo> * <fator> | <termo> / <fator> | <fator>
         /// </summary>
         private Sintaxe Termo()
@@ -344,11 +340,10 @@ namespace UNICAP.Compilador.Parser
                 tipo2 != TipoToken.INTEIRO &&
                 tipo1 != TipoToken.INTEIRO &&
                 tipo2 != TipoToken.FLOAT)
-                LancarExcecaoSemantica("Tipos incompatíveis");
+                LancarExcecaoSemantica($"Tipos incompatíveis: {tipo1} e {tipo2}");
         }
 
         /// <summary>
-        /// Realiza a validação do FATOR
         /// (<expressao_aritmetica>) | <identificador> | <float> | <int> | <char> | <string>
         /// </summary>
         private Sintaxe Fator()
@@ -437,23 +432,28 @@ namespace UNICAP.Compilador.Parser
         }
 
         /// <summary>
-        /// =
+        /// <identificador>
         /// </summary>
         private void Identificador()
         {
             if (Token.Tipo != TipoToken.IDENTIFICADOR)
-                LancarExcecaoSintatica($"Token esperado: =. Token encontrado: {Token.Lexema}");
+                LancarExcecaoSintatica($"Token esperado: <identificador>. Token encontrado: {Token.Lexema}");
         }
 
         private void LancarExcecaoSintatica(string? mensagem = null)
         {
-            var coluna = Token.Coluna > 1 ? Token.Coluna - 1 : Token.Coluna;
+            var coluna = Token?.Coluna > 1 ? Token?.Coluna - 1 : Token?.Coluna;
 
-            var descricaoToken = Token.Tipo.GetDescription() ?? "Sintaxe";
+            var descricaoToken = Token?.Tipo.GetDescription() ?? "Sintaxe";
 
             mensagem ??= $"{descricaoToken} inválida encontrado";
 
-            throw new ParserException($"{mensagem} | Linha: {Token.Linha} | Coluna: {coluna - 1}");
+            string linhaColuna = string.Empty;
+
+            if (Token != null)
+                linhaColuna = $"| Linha: { Token?.Linha} | Coluna: { coluna - 1}";
+
+            throw new SintaticaException($"{mensagem} {linhaColuna}");
         }
 
         private void LancarExcecaoSemantica(string? mensagem = null)
@@ -473,8 +473,9 @@ namespace UNICAP.Compilador.Parser
         }
         private void ValidarOperacaoExpressaoAritmetica(TipoToken tipo1, TipoToken tipo2)
         {
-            if ((tipo1 == TipoToken.CHAR && tipo2 != TipoToken.CHAR) || (tipo2 == TipoToken.CHAR && tipo1 != TipoToken.CHAR))
-                LancarExcecaoSintatica("CHAR não opera com outros tipos de dados");
+            if ((tipo1 == TipoToken.CHAR && tipo2 != TipoToken.CHAR) || (tipo2 == TipoToken.CHAR && tipo1 != TipoToken.CHAR) ||
+                (tipo1 == TipoToken.STRING && tipo2 != TipoToken.STRING) || (tipo2 == TipoToken.STRING && tipo1 != TipoToken.STRING))
+                LancarExcecaoSemantica("CHAR/STRING não opera com outros tipos de dados");
         }
     }
 }
