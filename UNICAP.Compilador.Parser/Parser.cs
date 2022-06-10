@@ -413,7 +413,7 @@ namespace UNICAP.Compilador.Parser
 
             GetNextToken();
             if (Token.Lexema != PONTO_E_VIRGULA)
-                LancarExcecaoSintatica($"Após uma declaração de variável, é esperado ';'. Valor encontrado: {Token.Lexema}");
+                LancarExcecaoSintatica($"Token esperado: ;. Valor encontrado: {Token.Lexema}");
         }
 
         private bool IsDeclaracaoVariavel()
